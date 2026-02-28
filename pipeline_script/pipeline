@@ -29,7 +29,7 @@ pipeline{
                 sh 'npm install'
             }
         }
-        
+
         stage('Sonarqube Analysis') {
             steps {
                 withSonarQubeEnv('sonar-server') {
@@ -38,7 +38,7 @@ pipeline{
                     -Dsonar.projectKey=ott-platform-prime \
                     -Dsonar.projectName=ott-platform-prime \
                     -Dsonar.sources=. \
-                    -Dsonar.host.url=http://localhost:9000 \
+                    -Dsonar.host.url=http://13.213.72.83:9000 \
                     -Dsonar.login=sonar-token
                     """
                 }
