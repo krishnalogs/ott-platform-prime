@@ -90,6 +90,13 @@ pipeline{
             }
         }
 
+        stage ("Deploy to Container") {
+            steps {
+                sh "sudo docker run -d --name ott-platform -p 3000:3000 ${params.AWS_ACCOUNT_ID}.dkr.ecr.${params.AWS_REGION}.amazonaws.com/${params.ECR_REPO_NAME}:${BUILD_NUMBER}"
+            }
+        }
+
+
         stage('Clean up the images') {
             steps{
                 sh """
