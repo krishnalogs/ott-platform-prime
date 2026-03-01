@@ -53,7 +53,7 @@ pipeline{
         
         stage('Trivy Scan') {
             steps {
-                sh "trivy image --severity HIGH,CRITICAL --exit-code 1 --no-progress ott-platform-prime:latest" > trivy_report.txt || true
+                sh "trivy image --severity HIGH,CRITICAL --exit-code 1 --no-progress ott-platform-prime:latest > trivy_report.txt || true"
             }
         }
 
