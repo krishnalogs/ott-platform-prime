@@ -1,6 +1,10 @@
 pipeline{
     agent any
-    
+
+    options{
+        skipStagesAfterUnstable() // to re-run the build from the failed stage instead of running all the stages again
+    }
+
     parameters{
         string(name: 'ECR_REPO_NAME', defaultValue: 'ott-platform-prime', description: 'Enter the ECR repository name')
         string(name: 'IMAGE_TAG', defaultValue: 'latest', description: 'Enter the image tag')
