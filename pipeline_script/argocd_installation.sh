@@ -1,35 +1,25 @@
 #!/bin/bash
-set -euo pipefail
+set -e
 
-ARGO_NAMESPACE="argocd"
-ARGO_RELEASE="argocd"
+NAMESPACE="argocd"
 
-echo "================================="
-echo " Installing ArgoCD"
-echo "================================="
+echo "Cleaning old ArgoCD installation..."
 
-# Add ArgoCD Helm repository
+kubectl delete namespace $NAMESPACE --ignore-not-found
+kubectl delete clusterrole argocd-server --ignore-not-found
+kubectl delete clusterrolebinding argocd-server --ignore-not-found
+
+echo "Installing ArgoCD..."
+
 helm repo add argo https://argoproj.github.io/argo-helm || true
 helm repo update
 
-# Install or Upgrade ArgoCD
-helm upgrade --install $ARGO_RELEASE argo/argo-cd \
-  --namespace $ARGO_NAMESPACE \
+helm upgrade --install argocd argo/argo-cd \
+  --namespace $NAMESPACE \
   --create-namespace \
   --set server.service.type=LoadBalancer \
-  --wait \
-  --timeout 10m
+  --wait
 
-echo "================================="
-echo " ArgoCD Installed Successfully"
-echo "================================="
+echo "ArgoCD installed successfully"
 
-echo "ArgoCD Services:"
-kubectl get svc -n $ARGO_NAMESPACE
-
-echo ""
-echo "Getting ArgoCD Admin Password..."
-
-kubectl get secret argocd-initial-admin-secret \
-  -n $ARGO_NAMESPACE \
-  -o jsonpath="{.data.password}" | base64 -d && echo
+kubectl get svc -n argocd
