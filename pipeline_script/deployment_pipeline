@@ -6,16 +6,20 @@ pipeline {
     }
 
     parameters {
-        string(name: 'CLUSTER_NAME', defaultValue: 'amazon-prime-cluster', description: 'Enter your EKS cluster name')
+        string(name: 'CLUSTER_NAME', defaultValue: 'prime-ott-platform-cluster', description: 'Enter your EKS cluster name')
+        string(name: 'ECR_REPO_NAME', defaultValue: 'prime-ott-platform', description: 'Enter the ECR repository name')
+        string(name: 'IMAGE_TAG', defaultValue: 'latest', description: 'Enter the image tag')
+        string(name: 'AWS_REGION', defaultValue: 'ap-southeast-1', description: 'Enter the AWS region')
+        string(name: 'AWS_ACCOUNT_ID', defaultValue: '859384797911', description: 'Enter the AWS account ID')
     }
 
     stages {
         stage("Login to EKS") {
             steps {
                 script {
-                    withCredentials([string(credentialsId: 'access-key', variable: 'AWS_ACCESS_KEY'),
-                                     string(credentialsId: 'secret-key', variable: 'AWS_SECRET_KEY')]) {
-                        sh "aws eks --region us-east-1 update-kubeconfig --name ${params.CLUSTER_NAME}"
+                    withCredentials([string(credentialsId: 'aws-access-key', variable: 'AWS_ACCESS_KEY'),
+                                     string(credentialsId: 'aws-secret-key', variable: 'AWS_SECRET_KEY')]) {
+                        sh "aws eks --region ${params.AWS_REGION} update-kubeconfig --name ${params.CLUSTER_NAME}"
                     }
                 }
             }

@@ -2,7 +2,7 @@ pipeline{
     agent any
     
     parameters{
-        string(name: 'ECR_REPO_NAME', defaultValue: 'ott-platform-prime', description: 'Enter the ECR repository name')
+        string(name: 'ECR_REPO_NAME', defaultValue: 'prime-ott-platform', description: 'Enter the ECR repository name')
         string(name: 'IMAGE_TAG', defaultValue: 'latest', description: 'Enter the image tag')
         string(name: 'AWS_REGION', defaultValue: 'ap-southeast-1', description: 'Enter the AWS region')
         string(name: 'AWS_ACCOUNT_ID', defaultValue: '859384797911', description: 'Enter the AWS account ID')
