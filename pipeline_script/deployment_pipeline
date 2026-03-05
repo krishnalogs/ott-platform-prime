@@ -45,12 +45,8 @@ pipeline {
         stage("Configure ArgoCD") {
             steps {
                 script {
-                    sh """
-                    # Install ArgoCD
-                    kubectl create namespace argocd || true
-                    kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
-                    kubectl patch svc argocd-server -n argocd -p '{"spec": {"type": "LoadBalancer"}}'
-                    """
+                    sh 'chmod +x pipeline_script/argocd_installation.sh'
+                    sh "./pipeline_script/argocd_installation.sh"
                 }
             }
         }
