@@ -8,8 +8,11 @@ locals {
   # intra_subnets   = ["10.0.5.0/24", "10.0.6.0/24"]
   tags = {
     Example = local.name
+    Terraform = "true"
   }
 }
+
+
 
 provider "aws" {
   region = "ap-southeast-1"
