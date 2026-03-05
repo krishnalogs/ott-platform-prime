@@ -20,8 +20,8 @@ pipeline {
         stage("Login to EKS") {
             steps {
                 script {
-                    withCredentials([string(credentialsId: 'access-key', variable: 'AWS_ACCESS_KEY'),
-                                     string(credentialsId: 'secret-key', variable: 'AWS_SECRET_KEY')]) {
+                    withCredentials([string(credentialsId: 'aws-access-key', variable: 'AWS_ACCESS_KEY'),
+                                     string(credentialsId: 'aws-secret-key', variable: 'AWS_SECRET_KEY')]) {
                         // Update kubeconfig
                         sh "aws eks --region ${params.AWS_REGION} update-kubeconfig --name ${params.CLUSTER_NAME}"
                         
