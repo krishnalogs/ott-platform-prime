@@ -1,33 +1,35 @@
 #!/bin/bash
-set -e
+set -euo pipefail
 
-# --- Setup Prometheus & Grafana ---
-echo ">>> Setting up Prometheus & Grafana..."
+ARGO_NAMESPACE="argocd"
+ARGO_RELEASE="argocd"
 
-# Add Helm repos
-helm repo add stable https://charts.helm.sh/stable || true
-helm repo add prometheus-community https://prometheus-community.github.io/helm-charts || true
-helm repo update
+echo "================================="
+echo " Installing ArgoCD"
+echo "================================="
 
-# Create namespace for Prometheus
-kubectl create namespace prometheus || true
-
-# Install or upgrade Prometheus stack
-helm upgrade --install kube-prometheus-stack prometheus-community/kube-prometheus-stack -n prometheus --timeout 15m
-
-# --- Setup ArgoCD ---
-echo ">>> Setting up ArgoCD..."
-
-# Create namespace for ArgoCD
-kubectl create namespace argocd || true
-
-# Install ArgoCD via Helm (avoids CRD annotation size issue)
+# Add ArgoCD Helm repository
 helm repo add argo https://argoproj.github.io/argo-helm || true
 helm repo update
 
-helm upgrade --install argocd argo/argo-cd -n argocd --timeout 15m
+# Install or Upgrade ArgoCD
+helm upgrade --install $ARGO_RELEASE argo/argo-cd \
+  --namespace $ARGO_NAMESPACE \
+  --create-namespace \
+  --set server.service.type=LoadBalancer \
+  --wait \
+  --timeout 10m
 
-# Patch ArgoCD server service to LoadBalancer
-kubectl patch svc argocd-server -n argocd -p '{"spec": {"type": "LoadBalancer"}}'
+echo "================================="
+echo " ArgoCD Installed Successfully"
+echo "================================="
 
-echo ">>> Monitoring and ArgoCD setup complete!"
+echo "ArgoCD Services:"
+kubectl get svc -n $ARGO_NAMESPACE
+
+echo ""
+echo "Getting ArgoCD Admin Password..."
+
+kubectl get secret argocd-initial-admin-secret \
+  -n $ARGO_NAMESPACE \
+  -o jsonpath="{.data.password}" | base64 -d && echo
