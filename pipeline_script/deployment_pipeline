@@ -30,39 +30,19 @@ pipeline {
                 script {
                     // sh "chmod 777 pipeline_script/monitoring_utils.sh"
                     sh """
-                    NAMESPACE="prometheus"
-                    RELEASE_NAME="kube-prometheus-stack"
-
-                    echo "Adding Helm repositories..."
+                    helm repo add stable https://charts.helm.sh/stable || true
                     helm repo add prometheus-community https://prometheus-community.github.io/helm-charts || true
-                    helm repo update
-
-                    echo "Checking if namespace exists..."
-                    if kubectl get namespace $NAMESPACE > /dev/null 2>&1; then
-                        echo "Namespace exists. Upgrading Helm release..."
-                        helm upgrade $RELEASE_NAME prometheus-community/kube-prometheus-stack \
-                            --namespace $NAMESPACE
+                    # Check if namespace 'prometheus' exists
+                    if kubectl get namespace prometheus > /dev/null 2>&1; then
+                        # If namespace exists, upgrade the Helm release
+                        helm upgrade stable prometheus-community/kube-prometheus-stack -n prometheus
                     else
-                        echo "Namespace does not exist. Creating namespace and installing Helm chart..."
-                        kubectl create namespace $NAMESPACE
-
-                        helm install $RELEASE_NAME prometheus-community/kube-prometheus-stack \
-                            --namespace $NAMESPACE
+                        # If namespace does not exist, create it and install Helm release
+                        kubectl create namespace prometheus
+                        helm install stable prometheus-community/kube-prometheus-stack -n prometheus
                     fi
-
-                    echo "Waiting for services to be created..."
-                    sleep 10
-
-                    echo "Patching services to LoadBalancer..."
-
-                    kubectl patch svc ${RELEASE_NAME}-kube-prometheus-prometheus \
-                    -n $NAMESPACE -p '{"spec": {"type": "LoadBalancer"}}' || true
-
-                    kubectl patch svc ${RELEASE_NAME}-grafana \
-                    -n $NAMESPACE -p '{"spec": {"type": "LoadBalancer"}}' || true
-
-                    echo "Deployment Completed"
-                    kubectl get svc -n $NAMESPACE
+                    kubectl patch svc stable-kube-prometheus-sta-prometheus -n prometheus -p '{"spec": {"type": "LoadBalancer"}}'
+                    kubectl patch svc stable-grafana -n prometheus -p '{"spec": {"type": "LoadBalancer"}}'
                     """
                 }
             }
