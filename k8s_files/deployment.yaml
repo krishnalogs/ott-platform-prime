@@ -2,22 +2,22 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: ott-prime-app
+  name: prime-ott-platform
   labels:
-    app: ott-prime-app
+    app: prime-ott-platform
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: ott-prime-app
+      app: prime-ott-platform
   template:
     metadata:
       labels:
-        app: ott-prime-app
+        app: prime-ott-platform
     spec:
       containers:
-      - name: ott-prime-container
-        image: 859384797911.dkr.ecr.ap-southeast-1.amazonaws.com/ott-prime:${BUILD_NUMBER}
+      - name: prime-ott-platform-container
+        image: 859384797911.dkr.ecr.ap-southeast-1.amazonaws.com/prime-ott-platform:${BUILD_NUMBER}
         ports:
         - containerPort: 3000
         resources:

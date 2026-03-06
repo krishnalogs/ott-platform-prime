@@ -39,8 +39,8 @@ pipeline{
                 withSonarQubeEnv('sonar-server') {
                     sh """
                     $SONARQUBE_SCANNER_HOME/bin/sonar-scanner \
-                    -Dsonar.projectKey=ott-platform-prime \
-                    -Dsonar.projectName=ott-platform-prime \
+                    -Dsonar.projectKey=prime-ott-platform \
+                    -Dsonar.projectName=prime-ott-platform \
                     # -Dsonar.sources=. \
                     # -Dsonar.host.url=http://13.213.72.83:9000 \
                     # -Dsonar.login=Sonar-token
@@ -57,11 +57,11 @@ pipeline{
         
         stage('Trivy Scan') {
             steps {
-                sh "trivy image --severity HIGH,CRITICAL --exit-code 1 --no-progress ott-platform-prime:latest > trivy_report.txt || true"
+                sh "trivy image --severity HIGH,CRITICAL --exit-code 1 --no-progress prime-ott-platform:latest > trivy_report.txt || true"
             }
         }
 
-        stage("Docker Image Creation and push in ECR") {
+        stage("Docker Image Creation") {
             steps {
                 sh "docker build -t ${params.ECR_REPO_NAME}:${params.IMAGE_TAG} ."
             }
@@ -96,7 +96,7 @@ pipeline{
 
         stage ("Deploy to Container") {
             steps {
-                sh "sudo docker run -d --name ott-platform -p 3000:3000 ${params.AWS_ACCOUNT_ID}.dkr.ecr.${params.AWS_REGION}.amazonaws.com/${params.ECR_REPO_NAME}:${BUILD_NUMBER}"
+                sh "sudo docker run -d --name prime-ott-platform-container -p 3000:3000 ${params.AWS_ACCOUNT_ID}.dkr.ecr.${params.AWS_REGION}.amazonaws.com/${params.ECR_REPO_NAME}:${BUILD_NUMBER}"
             }
         }
         
