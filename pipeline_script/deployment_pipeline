@@ -3,6 +3,7 @@ pipeline {
 
     environment {
         KUBECTL = '/usr/local/bin/kubectl'
+        Infra_dir = 'terraform_code/eks'
     }
 
     parameters {
@@ -14,42 +15,105 @@ pipeline {
     }
 
     stages {
+
         stage("Clone GitHub Repository") {
             steps {
-                // Clone the repository containing deployment and service files
                 git branch: 'main', url: 'https://github.com/krishnalogs/ott-platform-prime.git'
+            }
+        }
+
+        stage("Configure AWS Credentials") {
+            steps {
+                withCredentials([
+                    string(credentialsId: 'aws-access-key', variable: 'AWS_ACCESS_KEY_ID'),
+                    string(credentialsId: 'aws-secret-key', variable: 'AWS_SECRET_ACCESS_KEY')
+                ]) {
+                    sh '''
+                    export AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID
+                    export AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY
+                    export AWS_DEFAULT_REGION=${AWS_REGION}
+
+                    aws sts get-caller-identity
+                    '''
+                }
+            }
+        }
+
+        stage("Terraform Init") {
+            steps {
+                dir("${Infra_dir}") {
+                    sh '''
+                    terraform init
+                    '''
+                }
+            }
+        }
+
+        stage("Terraform Validate") {
+            steps {
+                dir("${Infra_dir}") {
+                    sh '''
+                    terraform validate
+                    '''
+                }
+            }
+        }
+
+        stage("Terraform Plan") {
+            steps {
+                dir("${Infra_dir}") {
+                    sh '''
+                    terraform plan -out=tfplan
+                    '''
+                }
+            }
+        }
+
+        stage("Terraform Apply (Create Infra)") {
+            steps {
+                dir("${Infra_dir}") {
+                    sh '''
+                    terraform apply -auto-approve tfplan
+                    echo "Infrastructure created successfully"
+                    '''
+                }
             }
         }
 
         stage("Login to EKS") {
             steps {
-                script {
-                    withCredentials([string(credentialsId: 'aws-access-key', variable: 'AWS_ACCESS_KEY'),
-                                     string(credentialsId: 'aws-secret-key', variable: 'AWS_SECRET_KEY')]) {
-                        sh "aws eks --region ${params.AWS_REGION} update-kubeconfig --name ${params.CLUSTER_NAME}"
-                    }
-                }
+                sh """
+                aws eks --region ${params.AWS_REGION} update-kubeconfig --name ${params.CLUSTER_NAME}
+                """
             }
         }
 
         stage("Configure Prometheus & Grafana") {
             steps {
-                script {
-                    // sh "chmod 777 pipeline_script/monitoring_utils.sh"
-                    sh 'chmod +x pipeline_script/monitoring_utils.sh'
-                    sh "./pipeline_script/monitoring_utils.sh"
-                }
+                sh '''
+                chmod +x pipeline_script/monitoring_utils.sh
+                ./pipeline_script/monitoring_utils.sh
+                '''
             }
         }
 
         stage("Configure ArgoCD") {
             steps {
-                script {
-                    sh 'chmod +x pipeline_script/argocd_installation.sh'
-                    sh "./pipeline_script/argocd_installation.sh"
-                }
+                sh '''
+                chmod +x pipeline_script/argocd_installation.sh
+                ./pipeline_script/argocd_installation.sh
+                '''
             }
         }
-		
+
+    }
+
+    post {
+        success {
+            echo "Pipeline executed successfully"
+        }
+        failure {
+            echo "Pipeline failed"
+        }
     }
 }

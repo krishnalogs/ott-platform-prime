@@ -1,110 +1,111 @@
-module "eks" {
-  source  = "terraform-aws-modules/eks/aws"
-  version = "21.14.0"
-  # ---------------------------------------------------------
-  # Cluster Configuration
-  # ---------------------------------------------------------
-  name    = local.name
-  kubernetes_version  = "1.29"
+############################
+# EKS Cluster Role
+############################
 
-  # ---------------------------------------------------------
-  # Networking
-  # ---------------------------------------------------------
-  vpc_id     = module.vpc.vpc_id
-  subnet_ids = module.vpc.public_subnets
+resource "aws_iam_role" "cluster_role" {
+  name = "prime-eks-cluster-role"
 
-  # ---------------------------------------------------------
-  # EKS Managed Node Groups
-  # ---------------------------------------------------------
-  eks_managed_node_groups = {
-    ott_node = {
-
-      instance_types = ["t3.medium"]
-
-      min_size     = 2
-      max_size     = 4
-      desired_size = 2
-
-      capacity_type = "SPOT"
-
-      # Automatically pick correct EKS optimized AMI
-      ami_type = "AL2023_x86_64_STANDARD"
-
-      tags = {
-        Name = "ott-nodes"
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect = "Allow"
+      Principal = {
+        Service = "eks.amazonaws.com"
       }
-    }
+      Action = "sts:AssumeRole"
+    }]
+  })
+}
+
+resource "aws_iam_role_policy_attachment" "cluster_policy" {
+  role       = aws_iam_role.cluster_role.name
+  policy_arn = "arn:aws:iam::aws:policy/AmazonEKSClusterPolicy"
+}
+
+############################
+# EKS Cluster
+############################
+
+resource "aws_eks_cluster" "cluster" {
+  name     = var.cluster_name
+  role_arn = aws_iam_role.cluster_role.arn
+
+  vpc_config {
+
+    subnet_ids = [
+      aws_subnet.public.id,
+      aws_subnet.private.id
+    ]
+
+    endpoint_public_access  = true
+    endpoint_private_access = true
   }
 
-  # ---------------------------------------------------------
-  # Global Tags
-  # ---------------------------------------------------------
-  tags = local.tags
+  depends_on = [
+  aws_nat_gateway.nat,
+  aws_iam_role_policy_attachment.cluster_policy
+]
 }
 
-# ---------------------------------------------------------
-# EKS Add-ons
-# ---------------------------------------------------------
-resource "aws_eks_addon" "coredns" {
-  cluster_name             = module.eks.cluster_name
-  addon_name               = "coredns"
-  addon_version            = data.aws_eks_addon_version.coredns.version
-  resolve_conflicts_on_create = "OVERWRITE"
-  resolve_conflicts_on_update = "OVERWRITE"
-  preserve                 = true
-  tags                     = local.tags
+############################
+# Node Role
+############################
+
+resource "aws_iam_role" "node_role" {
+  name = "prime-eks-node-role"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect = "Allow"
+      Principal = {
+        Service = "ec2.amazonaws.com"
+      }
+      Action = "sts:AssumeRole"
+    }]
+  })
 }
 
-resource "aws_eks_addon" "eks_pod_identity_agent" {
-  cluster_name             = module.eks.cluster_name
-  addon_name               = "eks-pod-identity-agent"
-  addon_version            = data.aws_eks_addon_version.eks_pod_identity_agent.version
-  resolve_conflicts_on_create = "OVERWRITE"
-  resolve_conflicts_on_update = "OVERWRITE"
-  preserve                 = true
-  tags                     = local.tags
+resource "aws_iam_role_policy_attachment" "worker" {
+  role       = aws_iam_role.node_role.name
+  policy_arn = "arn:aws:iam::aws:policy/AmazonEKSWorkerNodePolicy"
 }
 
-resource "aws_eks_addon" "kube_proxy" {
-  cluster_name             = module.eks.cluster_name
-  addon_name               = "kube-proxy"
-  addon_version            = data.aws_eks_addon_version.kube_proxy.version
-  resolve_conflicts_on_create = "OVERWRITE"
-  resolve_conflicts_on_update = "OVERWRITE"
-  preserve                 = true
-  tags                     = local.tags
+resource "aws_iam_role_policy_attachment" "cni" {
+  role       = aws_iam_role.node_role.name
+  policy_arn = "arn:aws:iam::aws:policy/AmazonEKS_CNI_Policy"
 }
 
-resource "aws_eks_addon" "vpc_cni" {
-  cluster_name             = module.eks.cluster_name
-  addon_name               = "vpc-cni"
-  addon_version            = data.aws_eks_addon_version.vpc_cni.version
-  resolve_conflicts_on_create = "OVERWRITE"
-  resolve_conflicts_on_update = "OVERWRITE"
-  preserve                 = true
-  tags                     = local.tags
+resource "aws_iam_role_policy_attachment" "ecr" {
+  role       = aws_iam_role.node_role.name
+  policy_arn = "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly"
 }
 
-data "aws_eks_addon_version" "coredns" {
-  addon_name           = "coredns"
-  kubernetes_version   = module.eks.cluster_version 
-  most_recent          = true
-}
+############################
+# Node Group
+############################
 
-data "aws_eks_addon_version" "eks_pod_identity_agent" {
-  addon_name           = "eks-pod-identity-agent"
-  kubernetes_version   = module.eks.cluster_version
-  most_recent          = true
-}
+resource "aws_eks_node_group" "node_group" {
 
-data "aws_eks_addon_version" "kube_proxy" {
-  addon_name           = "kube-proxy"
-  kubernetes_version   = module.eks.cluster_version
-  most_recent          = true
-}
+  cluster_name    = aws_eks_cluster.cluster.name
+  node_group_name = "prime-node-group"
+  node_role_arn   = aws_iam_role.node_role.arn
 
-data "aws_eks_addon_version" "vpc_cni" {
-  addon_name           = "vpc-cni"
-  kubernetes_version   = module.eks.cluster_version
-  most_recent          = true
+  subnet_ids = [
+    aws_subnet.private.id
+  ]
+
+  instance_types = ["t3.medium"]
+
+  scaling_config {
+    desired_size = 2
+    min_size     = 1
+    max_size     = 3
+  }
+
+  depends_on = [
+    aws_iam_role_policy_attachment.worker,
+    aws_iam_role_policy_attachment.cni,
+    aws_iam_role_policy_attachment.ecr
+  ]
 }
