@@ -6,6 +6,10 @@ pipeline {
         Infra_dir = 'terraform_code/eks'
     }
 
+    // tools {
+    //     terraform 'terraform-1.6.0'
+    // }
+
     parameters {
         string(name: 'CLUSTER_NAME', defaultValue: 'prime-ott-platform-cluster', description: 'Enter your EKS cluster name')
         string(name: 'ECR_REPO_NAME', defaultValue: 'prime-ott-platform', description: 'Enter the ECR repository name')
@@ -22,63 +26,63 @@ pipeline {
             }
         }
 
-        stage("Configure AWS Credentials") {
-            steps {
-                withCredentials([
-                    string(credentialsId: 'aws-access-key', variable: 'AWS_ACCESS_KEY_ID'),
-                    string(credentialsId: 'aws-secret-key', variable: 'AWS_SECRET_ACCESS_KEY')
-                ]) {
-                    sh '''
-                    export AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID
-                    export AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY
-                    export AWS_DEFAULT_REGION=${AWS_REGION}
+        // stage("Configure AWS Credentials") {
+        //     steps {
+        //         withCredentials([
+        //             string(credentialsId: 'aws-access-key', variable: 'AWS_ACCESS_KEY_ID'),
+        //             string(credentialsId: 'aws-secret-key', variable: 'AWS_SECRET_ACCESS_KEY')
+        //         ]) {
+        //             sh '''
+        //             export AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID
+        //             export AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY
+        //             export AWS_DEFAULT_REGION=${AWS_REGION}
 
-                    aws sts get-caller-identity
-                    '''
-                }
-            }
-        }
+        //             aws sts get-caller-identity
+        //             '''
+        //         }
+        //     }
+        // }
 
-        stage("Terraform Init") {
-            steps {
-                dir("${Infra_dir}") {
-                    sh '''
-                    terraform init
-                    '''
-                }
-            }
-        }
+        // stage("Terraform Init") {
+        //     steps {
+        //         dir("${Infra_dir}") {
+        //             sh '''
+        //             terraform init
+        //             '''
+        //         }
+        //     }
+        // }
 
-        stage("Terraform Validate") {
-            steps {
-                dir("${Infra_dir}") {
-                    sh '''
-                    terraform validate
-                    '''
-                }
-            }
-        }
+        // stage("Terraform Validate") {
+        //     steps {
+        //         dir("${Infra_dir}") {
+        //             sh '''
+        //             terraform validate
+        //             '''
+        //         }
+        //     }
+        // }
 
-        stage("Terraform Plan") {
-            steps {
-                dir("${Infra_dir}") {
-                    sh '''
-                    terraform plan -out=tfplan
-                    '''
-                }
-            }
-        }
+        // stage("Terraform Plan") {
+        //     steps {
+        //         dir("${Infra_dir}") {
+        //             sh '''
+        //             terraform plan -out=tfplan
+        //             '''
+        //         }
+        //     }
+        // }
 
-        stage("Terraform Apply (Create Infra)") {
-            steps {
-                dir("${Infra_dir}") {
-                    sh '''
-                    terraform apply -auto-approve tfplan
-                    echo "Infrastructure created successfully"
-                    '''
-                }
-            }
-        }
+        // stage("Terraform Apply (Create Infra)") {
+        //     steps {
+        //         dir("${Infra_dir}") {
+        //             sh '''
+        //             terraform apply -auto-approve tfplan
+        //             echo "Infrastructure created successfully"
+        //             '''
+        //         }
+        //     }
+        // }
 
         stage("Login to EKS") {
             steps {
