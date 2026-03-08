@@ -77,7 +77,7 @@ pipeline {
         //     steps {
         //         dir("${Infra_dir}") {
         //             sh '''
-        //             terraform apply -auto-approve tfplan
+        //             terraform apply tfplan
         //             echo "Infrastructure created successfully"
         //             '''
         //         }
