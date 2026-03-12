@@ -109,14 +109,18 @@ pipeline {
                 '''
             }
         }
+
+        stage("destroy the  infrastructure"){
+            steps{
+                input message: 'Do you really want to destroy the infrastructure?'
+                sh 'terraform destroy -auto-approve '
+            }
+        }
     }
 
     post {
         success {
-            echo "Pipeline executed successfully"
-
-            input message: 'Do you really want to destroy the infrastructure?'
-            sh 'terraform destroy -auto-approve'
+            echo "Pipeline executed successfully and deleted infra successfully"
         }
 
         failure {
