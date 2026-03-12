@@ -6,9 +6,9 @@ pipeline {
         Infra_dir = 'terraform_code/eks'
     }
 
-    // tools {
-    //     terraform 'terraform-1.6.0'
-    // }
+    tools {
+         terraform 'terraform-1.6'
+    }
 
     parameters {
         string(name: 'CLUSTER_NAME', defaultValue: 'prime-ott-platform-cluster', description: 'Enter your EKS cluster name')
