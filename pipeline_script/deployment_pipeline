@@ -109,13 +109,16 @@ pipeline {
                 '''
             }
         }
-
     }
 
     post {
         success {
             echo "Pipeline executed successfully"
+
+            input message: 'Do you really want to destroy the infrastructure?'
+            sh 'terraform destroy -auto-approve'
         }
+
         failure {
             echo "Pipeline failed"
         }
