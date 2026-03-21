@@ -110,10 +110,10 @@ pipeline {
             }
         }
 
-        stage("destroy the  infrastructure"){
+        stage("destroy the infrastructure"){
             steps{
                 input message: 'Do you really want to destroy the infrastructure?'
-                sh 'terraform destroy -auto-approve '
+                sh 'terraform destroy'
             }
         }
     }
