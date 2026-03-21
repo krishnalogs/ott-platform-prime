@@ -111,7 +111,7 @@ pipeline{
                 stage("Trigger the deployment pipeline") {
                     steps {
                         input message: 'Do you want to create the infrastructure?', ok: 'Create Infrastructure'
-                        build job: 'pipeline_script\deployment_pipeline', parameters: [string(name: 'IMAGE_TAG', value: "${BUILD_NUMBER}")]
+                        build job: 'pipeline_script/deployment_pipeline', parameters: [string(name: 'IMAGE_TAG', value: "${BUILD_NUMBER}")]
                     }
                 }
             }
