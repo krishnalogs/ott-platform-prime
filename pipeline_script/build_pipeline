@@ -61,7 +61,7 @@ pipeline{
             }
         }
 
-        stage("Docker Image Creation") {
+        stage("Docker Image Creation and push in ECR") {
             steps {
                 sh "docker build -t ${params.ECR_REPO_NAME}:${params.IMAGE_TAG} ."
             }
