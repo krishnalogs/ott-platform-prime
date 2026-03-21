@@ -95,12 +95,6 @@ pipeline{
         }
         stage("Parallel Build Actions") {
             parallel{
-                stage("Trigger the deployment pipeline") {
-                    steps {
-                        input message: 'Do you want to create the infrastructure?', ok: 'Create Infrastructure'
-                        build job: 'deployment_pipeline', parameters: [string(name: 'IMAGE_TAG', value: "${BUILD_NUMBER}")]
-                    }
-                }
                 stage ("Deploy to Container") {
                     steps {
                         sh "sudo docker run -d --name prime-ott-platform-container -p 3000:3000 ${params.AWS_ACCOUNT_ID}.dkr.ecr.${params.AWS_REGION}.amazonaws.com/${params.ECR_REPO_NAME}:${BUILD_NUMBER}"
@@ -112,6 +106,12 @@ pipeline{
                         docker rmi ${params.ECR_REPO_NAME}:${params.IMAGE_TAG} || true
                         docker rmi ${params.AWS_ACCOUNT_ID}.dkr.ecr.${params.AWS_REGION}.amazonaws.com/${params.ECR_REPO_NAME}:${BUILD_NUMBER} || true
                         """
+                    }
+                }
+                stage("Trigger the deployment pipeline") {
+                    steps {
+                        input message: 'Do you want to create the infrastructure?', ok: 'Create Infrastructure'
+                        build job: 'pipeline_script\deployment_pipeline', parameters: [string(name: 'IMAGE_TAG', value: "${BUILD_NUMBER}")]
                     }
                 }
             }
