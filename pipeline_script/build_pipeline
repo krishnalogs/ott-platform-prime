@@ -110,7 +110,7 @@ pipeline{
                 }
                 stage("Trigger the deployment pipeline") {
                     steps {
-                        input message: 'Do you want to create the infrastructure?', ok: 'Create Infrastructure'
+                        input message: 'Do you want to create the argocd?', ok: 'Create ArgoCD'
                         build job: 'ott-platform-deployment-pipeline', parameters: [string(name: 'IMAGE_TAG', value: "${BUILD_NUMBER}")], wait: false
                     }
                 }

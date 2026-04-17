@@ -9,17 +9,21 @@ kubectl delete namespace $NAMESPACE --ignore-not-found
 kubectl delete clusterrole argocd-server --ignore-not-found
 kubectl delete clusterrolebinding argocd-server --ignore-not-found
 
+echo "Creating namespace $NAMESPACE..."
+kubectl create namespace argocd
+
 echo "Installing ArgoCD..."
 
-helm repo add argo https://argoproj.github.io/argo-helm || true
-helm repo update
-
-helm upgrade --install argocd argo/argo-cd \
-  --namespace $NAMESPACE \
-  --create-namespace \
-  --set server.service.type=LoadBalancer \
-  --wait
+kubectl apply -n argocd \
+  --server-side \
+  --force-conflicts \
+  -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
 
 echo "ArgoCD installed successfully"
+
+echo "Patching argocd-server service to ELB"
+
+kubectl patch svc argocd-server -n argocd \
+  -p '{"spec": {"type": "LoadBalancer"}}'
 
 kubectl get svc -n argocd
