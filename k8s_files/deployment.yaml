@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
       - name: prime-ott-platform-container
-        image: 859384797911.dkr.ecr.ap-southeast-1.amazonaws.com/prime-ott-platform:${BUILD_NUMBER}
+        image: 859384797911.dkr.ecr.ap-southeast-1.amazonaws.com/prime-ott-platform:latest
         ports:
         - containerPort: 3000
         resources:
