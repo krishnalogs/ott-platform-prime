@@ -46,7 +46,7 @@ pipeline {
         stage("create eks cluster"){
             steps{
                 sh '''
-                chmod +x eks.sh
+                chmod +x infra/eks.sh
                 ./infra/eks.sh
                 '''
             }
