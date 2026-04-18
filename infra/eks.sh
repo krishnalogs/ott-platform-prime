@@ -5,7 +5,7 @@ set -euo pipefail
 # User-configurable variables
 ############################################
 AWS_REGION="ap-southeast-1"
-CLUSTER_NAME="prime-ott-eks"
+CLUSTER_NAME="prime-ott-platform-cluster"
 K8S_VERSION="1.31"
 NODEGROUP_NAME="prime-ott-ng"
 NODE_TYPE="t3.medium"
